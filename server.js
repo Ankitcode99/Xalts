@@ -3,6 +3,7 @@ dotenv.config({path: './config/config.env'})
 const express = require('express');
 const { createTablesInDatabase } = require('./db');
 const app = express();
+const axios = require('axios');
 const PORT = process.env.PORT || 5000;
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swaggerConfig'); 
@@ -43,10 +44,9 @@ app.get("/keep-alive",(req,res)=>{
 
 // Keep-Alive utility to keep server always running!
 setInterval(()=>{
-    fetch('https://multisign-backend.onrender.com/keep=alive')
-        .then(response => response.json())
+    axios.get('https://multisign-backend.onrender.com/keep-alive')
         .then((data)=>{
-            console.log(data);
+            console.log(data.data);
         })
         .catch((err) => {
             console.log("ERROR LOG: Keep Alive ERROR: ",err);
