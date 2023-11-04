@@ -43,7 +43,7 @@ app.get("/keep-alive",(req,res)=>{
 
 // Keep-Alive utility to keep server always running!
 setInterval(()=>{
-    fetch('https://https://multisign-backend.onrender.com/keep=alive')
+    fetch('https://multisign-backend.onrender.com/keep=alive')
         .then(response => response.json())
         .then((data)=>{
             console.log(data);
