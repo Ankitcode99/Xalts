@@ -2,7 +2,7 @@ const { addCommentVisitorsToDatabase, addProcessParticipantsToDatabase } = requi
 const { createJsonMessage } = require("../utils");
 const { createProcessPromise, addMultipleEntries, deleteProcessParticipants, deleteProcessById, getProcessDetails, getProcessParticipants, getProcessCommentVisibilityList, getEmailFromArray, validateProcessCreator, validateProcessParticipant, addCommentForProcess, addPictureUrlForProcess, updateSignCount, updateProcessStatus } = require("../utils/processUtils");
 
-const REQUIRE_PARTICIPANTS = 2;
+const REQUIRE_PARTICIPANTS = 5;
 
 module.exports.createNewProcess = async (req,res) => {
     try {
