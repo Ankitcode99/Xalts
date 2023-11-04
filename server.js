@@ -7,7 +7,8 @@ const PORT = process.env.PORT || 5000;
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swaggerConfig'); 
 
-const morgan = require('morgan')
+const morgan = require('morgan');
+const { getCurrentDateTime } = require('./utils');
 
 createTablesInDatabase().then(()=>{
     console.log(`DB Connection established`)
@@ -33,6 +34,25 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 
 app.use('/api/auth', require('./routes/authRoutes'))
 app.use('/api/process', require('./routes/processRoutes'))
+
+app.get("/keep-alive",(req,res)=>{
+    res.json({
+        "Keep-Alive": getCurrentDateTime()
+    })
+})
+
+// Keep-Alive utility to keep server always running!
+setInterval(()=>{
+    fetch('https://https://multisign-backend.onrender.com/keep=alive')
+        .then(response => response.json())
+        .then((data)=>{
+            console.log(data);
+        })
+        .catch((err) => {
+            console.log("ERROR LOG: Keep Alive ERROR: ",err);
+        })
+},890000)
+
 app.use('*', (req,res)=>{
     res.status(404).json({
         "message": 'Error 404!'
