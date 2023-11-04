@@ -4,9 +4,9 @@ const options = {
     definition: {
     openapi: '3.0.0',
     info: {
-        title: 'Your API',
+        title: 'Multi Sign Backend API',
         version: '1.0.0',
-        description: 'API Documentation for Your Express.js Project',
+        description: 'API Documentation for Multi Sign backend',
     },
     components: {
         securitySchemes: {

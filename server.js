@@ -17,7 +17,7 @@ createTablesInDatabase().then(()=>{
 app.use(express.json());
 app.use(morgan('dev'))
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: 'Your API Documentation',
+    customSiteTitle: 'Multi Sign API Documentation',
     swaggerOptions: {
       validatorUrl: null, // Disable validation
       displayOperationId: true, // Show operation ID
