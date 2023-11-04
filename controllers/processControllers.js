@@ -1,6 +1,6 @@
 const { addCommentVisitorsToDatabase, addProcessParticipantsToDatabase } = require("../repositories/processQueries");
 const { createJsonMessage } = require("../utils");
-const { createProcessPromise, addMultipleEntries, deleteProcessParticipants, deleteProcessById, getProcessDetails, getProcessParticipants, getProcessCommentVisibilityList, getEmailFromArray, validateProcessCreator, validateProcessParticipant, addCommentForProcess, addPictureUrlForProcess, updateSignCount, updateProcessStatus } = require("../utils/processUtils");
+const { createProcessPromise, addMultipleEntries, deleteProcessParticipants, deleteProcessById, getProcessDetails, getProcessParticipants, getProcessCommentVisibilityList, getEmailFromArray, validateProcessCreator, validateProcessParticipant, addCommentForProcess, addPictureUrlForProcess, updateSignCount, updateProcessStatus, checkIsListInvalid } = require("../utils/processUtils");
 
 const REQUIRE_PARTICIPANTS = 5;
 
@@ -12,44 +12,55 @@ module.exports.createNewProcess = async (req,res) => {
         let process_id;
         let errorListName = ''
 
-        commentVisibility = [...commentVisibility, loginEmail];
+        const participantListInvalid = checkIsListInvalid(participants);
+        const commentListInvalid = checkIsListInvalid(commentVisibility)
 
-        if(participants.length != REQUIRE_PARTICIPANTS) {
-            res.status(400).json(createJsonMessage(`Please mention exactly ${REQUIRE_PARTICIPANTS} participants to sign-off process`));
-        } else{
-            let emailList = [...participants, loginEmail]
-            await createProcessPromise(loginEmail, description)
-                .then((result) => {
-                    process_id = result.id;
-                    return addMultipleEntries(addProcessParticipantsToDatabase, process_id, participants)
-                }).then(results => {
+        if(participantListInvalid || commentListInvalid) {
+            return res.status(400).json(createJsonMessage(`Invalid Input: Both participants and commentsVisbility are of array-type and should not be empty`));
+        } else {
+            participants = [...new Set(participants)];
 
-                }).catch((error)=>{
-                    errorListName = "partcipant\'s"
-                    console.log("ERROR LOG: One or more participant\'s email is invalid ", error);
-                    deleteProcessById(process_id);
-                })
-
-            if(errorListName != '') {
-                return res.status(400).json(createJsonMessage(`One or more ${errorListName} email is invalid`));
+            if(participants.length != REQUIRE_PARTICIPANTS){
+                return res.status(400).json(createJsonMessage(`Invalid Input: Exactly ${REQUIRE_PARTICIPANTS} unique participant emails are required!`));
             } else{
-                await addMultipleEntries(addCommentVisitorsToDatabase, process_id, commentVisibility)
-                    .then((result)=>{
+                commentVisibility = [...commentVisibility, loginEmail];
+                commentVisibility = [...new Set(commentVisibility)]
+        
+                let emailList = [...participants, loginEmail]
+                await createProcessPromise(loginEmail, description)
+                    .then((result) => {
+                        process_id = result.id;
+                        return addMultipleEntries(addProcessParticipantsToDatabase, process_id, participants)
+                    }).then(results => {
 
-                        console.log("Multiple entry 2: ",result)
-
-                        return res.status(201).json({
-                            "message": `Successfully created a new process with ID ${result.rows[0].process_id}`,
-                            "email-notification": `Sent email notification to users - ${emailList}`
-                        })
-                    }).catch(async (error)=>{
-                        await deleteProcessParticipants(process_id);
-                        console.log("ERROR LOG: One or more commentor\'s email is invalid ", error);
+                    }).catch((error)=>{
+                        errorListName = "partcipant\'s"
+                        console.log("ERROR LOG: One or more participant\'s email is invalid ", error);
                         deleteProcessById(process_id);
-                        return res.status(400).json(createJsonMessage("One or more commentor\'s email is invalid"));
                     })
+
+                if(errorListName != '') {
+                    return res.status(400).json(createJsonMessage(`One or more ${errorListName} email is invalid`));
+                } else{
+                    await addMultipleEntries(addCommentVisitorsToDatabase, process_id, commentVisibility)
+                        .then((result)=>{
+
+                            console.log("Multiple entry 2: ",result)
+
+                            return res.status(201).json({
+                                "message": `Successfully created a new process with ID ${result.rows[0].process_id}`,
+                                "email-notification": `Sent email notification to users - ${emailList}`
+                            })
+                        }).catch(async (error)=>{
+                            await deleteProcessParticipants(process_id);
+                            console.log("ERROR LOG: One or more commentor\'s email is invalid ", error);
+                            deleteProcessById(process_id);
+                            return res.status(400).json(createJsonMessage("One or more commentor\'s email is invalid"));
+                        })
+                }
             }
         }
+        
     } catch (error) {
         console.log("ERROR LOG: Error creating new process: "+error);
         return res.status(500).json(createJsonMessage("Internal Server Error! Please try after sometime."))
@@ -99,7 +110,7 @@ module.exports.addProcessCommentors = async (req, res) => {
         const process_id = req.params.id;
         const {loginEmail} = req.user;
 
-        if(!commentVisibility || !(Array.isArray(commentVisibility)) || commentVisibility?.length == 0) {
+        if(checkIsListInvalid(commentVisibility)) {
             res.status(400).json(createJsonMessage("Please enter email(s) in a list to provide comments visibility"));
         } else {
             validateProcessCreator(process_id, loginEmail)

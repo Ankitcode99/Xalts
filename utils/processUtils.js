@@ -142,6 +142,10 @@ async function updateProcessStatus(process_id) {
     return result.rows[0];
 }
 
+function checkIsListInvalid(inputList) {
+    return (!inputList || !(Array.isArray(inputList)) || inputList?.length == 0)
+}
+
 module.exports = {
     createProcessPromise,
     addMultipleEntries,
@@ -156,5 +160,6 @@ module.exports = {
     addCommentForProcess,
     addPictureUrlForProcess,
     updateSignCount,
-    updateProcessStatus
+    updateProcessStatus,
+    checkIsListInvalid
 }
